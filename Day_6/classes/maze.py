@@ -2,7 +2,6 @@ from itertools import product
 from .helper import Loc, Direction, Player
 
 Grid = list[list[str]]
-# Loc = tuple[int, int]
 
 class Maze:
     def __init__(self, grid:Grid) -> None:
@@ -37,13 +36,19 @@ class Maze:
     '''
     def solve_part_2(self) -> int:
         totals:int = 0
-        for i,j in product(range(len(self.grid)),range(len(self.grid))):
-            if self.grid[i][j] in ('#','^'): # don't touch the starting location or already existing obstacles
+        loc:Loc
+        
+        # For efficiency, we only need to look at the nodes in the original path, so lets grab that.
+        self.solve_part_1()
+        indexes_to_visit:list[Loc] = [Loc(x,y) for x,y,_ in self.visited]
+        
+        # Iterate over all nodes in the original path.
+        for loc in indexes_to_visit:
+            if self.get_grid_value(loc) in ('#','^'): # don't touch the starting location or already existing obstacles
                 continue
-            # print(f"Setting {(i,j)}:{self.grid[i][j]} to #")
-            self.grid[i][j] = '#' # change this spot to be a obstacle.
+            self.grid[loc.x][loc.y] = '#' # change this spot to be a obstacle.
             totals += 1 if self._solve_single_mutation() else 0
-            self.grid[i][j] = '.' # reset the grid back.
+            self.grid[loc.x][loc.y] = '.' # reset the grid back.
         return totals
         
     
@@ -62,7 +67,8 @@ class Maze:
             self.visited.add((self.player.loc.x, self.player.loc.y, self.player.dir))
 
             # Project a step ahead to see if we'll hit an obstacle
-            if self.peek_grid_value(self.player.loc) == '#':
+            # Tricky edge-case here if there are two obstacles forming a corner we need to keep turning!
+            while self.peek_grid_value(self.player.loc) == '#':
                 self.player.turn() # turn 90 degrees if obstacle
             
             # Let's take a step!
@@ -91,7 +97,7 @@ class Maze:
         projected:Loc = Loc.add(self.player.loc, self.player.dir.value)
         if self.loc_in_grid(projected):
             return self.grid[projected.x][projected.y]
-        return '' # return empty string to indicate we've left the grid
+        return '' # return empty string to indicate we've left the grid (override wraparounds)
 
     '''
     Returns the value in the grid at this location
