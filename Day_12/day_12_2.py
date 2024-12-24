@@ -3,9 +3,9 @@ from classes.helper import Loc, Direction
 
 def solve(lines:list[list[str]]) -> int:
     garden:Grid = Grid(lines)
-    print(garden.garden)
-    total:int = garden.solve_part_1()
-    print(garden.garden)
+    total:int = garden.solve_part_2()
+    # print(garden.garden)
+
     return total
 
 if __name__ == '__main__':

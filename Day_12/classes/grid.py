@@ -1,5 +1,5 @@
 from itertools import product
-from .helper import Loc, Direction, Region, Node
+from .helper import Loc, Direction, Region, Node, Walker
 
 class Grid:
     def __init__(self, grid:list[list[str]]) -> None:
@@ -25,6 +25,7 @@ class Grid:
             for node in region.nodes:
                 perimeter += node.open_sides
             print(f"{region}. has area of {area} and perimeter of {perimeter}")
+            print(f"\tIt has a corner of {region.get_corner_loc()}")
             total_cost += (area*perimeter)
         
         return total_cost
@@ -35,13 +36,69 @@ class Grid:
         From there, we'll need to get clever. Let's grab a region, and find a Node
         within it that is on the corner. Then we 'walk' around the region, counting 
         how often we change sides.
-        '''
-        self.process_regions()
 
+        Start at top left corner. Start a walker there
+        '''
         total_cost:int = 0
+        self.process_regions()
+        for region in self.regions:
+            area:int = len(region.nodes)
+            sides:int = self.walk_region(region)
+            print(f"{region}. has area of {area} and {sides} sides")
+            print(f"\tIt has a corner of {region.get_corner_loc()}")
+            total_cost += (area*sides)
+            
         return total_cost
-        # for region in self.regions:
-            # count corner nodes
+
+    def walk_region(self, region:Region) -> int:
+        '''
+        Walks the perimeter of a region, returning the number of sides
+
+        This is done by initializing a walker at the top-left corner, and following the edge on the right.
+        Any time the walker has to turn, we have a new side.
+        '''
+        print(f"Walking region id: {region.id}")
+        sides:int = 0
+        corner_loc:Loc = region.get_corner_loc()
+        # We start one unit to the left of the corner
+        start_loc:Loc = Loc.add(corner_loc,Direction.LEFT.value)
+        walker:Walker = Walker(start_loc,Direction.UP)
+        
+        # We're at the top left corner so let's kick off by moving up and turning
+        walker.walk()
+        walker.turn_right()
+        sides+=1
+
+        while walker.loc != start_loc:
+        # for i in range(20):
+            # as we walk, we need to check first if we'll walk into the region.
+            projected_value:str = self.peek_grid_value(walker.loc,walker.dir)
+            
+            if projected_value == region.id:
+                # this means we're in an inside corner and should turn left
+                walker.turn_left()
+                # walker.walk()
+                sides+=1
+                continue # move to the next iteration of the loop.
+            
+            # we can now move forward safely.
+            else:
+                walker.walk()
+                
+                # Check if the wall is still to our right
+                wall_dir:Direction = Direction.rotate_right(walker.dir)
+                # wall_loc:Loc = Loc.add(walker.loc, wall_dir.value)
+                if self.peek_grid_value(walker.loc,wall_dir) == region.id:
+                    continue # we're still on a side
+                
+                # if our region id isn't to the right anymore, we need to rotate to follow it
+                walker.turn_right()
+                # walker.walk()
+                sides+=1
+        
+        return sides
+            
+
 
 
         
@@ -71,10 +128,6 @@ class Grid:
             # Now that this region is complete, add it to the grid's list
             self.regions.append(region)
 
-    
-    
-    
-    
     def _init_garden(self) -> None:
         # First, go through the whole grid, and convert all points to Node objects
         for i,j in product(range(len(self.grid)),range(len(self.grid))):
@@ -89,15 +142,11 @@ class Grid:
             for neighbor_loc in [Loc.add(loc,d.value) for d in Direction]:
                 if self.loc_in_grid(neighbor_loc):
                     node.add_neighbor(self.garden[neighbor_loc.as_tuple()])
-                    
-
-        
-
     
-    '''
-    Checks if the given location is still within the grid
-    '''
     def loc_in_grid(self, loc:Loc) -> bool:
+        '''
+        Checks if the given location is still within the grid
+        '''
         max_size:int = len(self.grid)
         if loc.x >= max_size or loc.x < 0:
             return False
@@ -105,14 +154,14 @@ class Grid:
             return False
         return True
 
-    '''
-    Checks ahead one step to see the 'next' value in the grid
-    '''
-    # def peek_grid_value(self,loc:Loc) -> str:
-    #     projected:Loc = Loc.add(self.player.loc, self.player.dir.value)
-    #     if self.loc_in_grid(projected):
-    #         return self.grid[projected.x][projected.y]
-    #     return '' # return empty string to indicate we've left the grid (override wraparounds)
+    def peek_grid_value(self,loc:Loc, dir:Direction) -> str:
+        '''
+        Checks ahead one step to see the 'next' value in the grid
+        '''
+        projected:Loc = Loc.add(loc, dir.value)
+        if self.loc_in_grid(projected):
+            return self.grid[projected.x][projected.y]
+        return '' # return empty string to indicate we've left the grid (override wraparounds)
 
     '''
     Returns the value in the grid at this location

@@ -23,6 +23,10 @@ class Loc:
         return self.__str__()
     def __eq__(self, value: 'Loc') -> bool:
         return self.as_tuple() == value.as_tuple()
+    def __lt__(self, other:'Loc') -> bool:
+        return self.x <= other.x and self.y <= other.y
+    def __gt__(self, other:'Loc') -> bool:
+        return self.x > other.x and self.y > other.y
     
 
 class Direction(Enum):
@@ -30,6 +34,34 @@ class Direction(Enum):
     RIGHT   = Loc(0,1)
     DOWN    = Loc(1,0)
     LEFT    = Loc(0,-1)
+
+    @classmethod
+    def rotate_right(cls, current_dir:'Direction') -> 'Direction':
+        match current_dir:
+            case Direction.UP:
+                return Direction.RIGHT
+            case Direction.RIGHT:
+                return Direction.DOWN
+            case Direction.DOWN:
+                return Direction.LEFT
+            case Direction.LEFT:
+                return Direction.UP
+        # default
+        return current_dir
+    
+    @classmethod
+    def rotate_left(cls, current_dir:'Direction') -> 'Direction':
+        match current_dir:
+            case Direction.UP:
+                return Direction.LEFT
+            case Direction.RIGHT:
+                return Direction.UP
+            case Direction.DOWN:
+                return Direction.RIGHT
+            case Direction.LEFT:
+                return Direction.DOWN
+        # default
+        return current_dir
 
     
 class Node:
@@ -82,37 +114,41 @@ class Region:
     
     def inside(self, node:Node) -> bool:
         return node.loc.as_tuple() in self._node_set
+    
+    def get_corner_loc(self) -> Loc:
+        '''Returns the top-left corner of  this region'''
+        corner:Node = self.nodes[0]
+        for node in self.nodes:
+            if node.loc < corner.loc:
+                corner = node
+        return corner.loc
 
     def __str__(self) -> str:
         return f"Region[{self.id}] contains {len(self.nodes)} nodes"
 
 
-
-
-
-# class Player:
-#     def __init__(self, loc:Loc, dir:Direction) -> None:
-#         self.loc:Loc = loc
-#         self.dir:Direction = dir
+class Walker:
+    def __init__(self, loc:Loc, dir:Direction) -> None:
+        self.loc:Loc = loc
+        self.dir:Direction = dir
     
-#     '''
-#     Walks the player in the direction they are facing and updates their location
-#     (Location not guarenteed to be valid)
-#     '''
-#     def walk(self) -> None:
-#         self.loc = Loc.add(self.loc, self.dir.value)
+    '''
+    Walks the walker in the direction they are facing and updates their location
+    (Location not guarenteed to be valid)
+    '''
+    def walk(self) -> None:
+        print(f"Walker moving from {self.loc} to {Loc.add(self.loc, self.dir.value)}. Facing {self.dir.name}")
+        self.loc = Loc.add(self.loc, self.dir.value)
 
-#     '''
-#     Turns the player 90 degrees to the right.
-#     '''
-#     def turn(self) -> None:
-#         match self.dir:
-#             case Direction.UP:
-#                 self.dir = Direction.RIGHT
-#             case Direction.RIGHT:
-#                 self.dir = Direction.DOWN
-#             case Direction.DOWN:
-#                 self.dir = Direction.LEFT
-#             case Direction.LEFT:
-#                 self.dir = Direction.UP
+    def turn_right(self) -> None:
+        '''
+        Turns the walker 90 degrees to the right.
+        '''
+        self.dir = Direction.rotate_right(self.dir)
+
+    def turn_left(self) -> None:
+        '''
+        Turns the walker 90 degrees to the left.
+        '''
+        self.dir = Direction.rotate_left(self.dir)
         
