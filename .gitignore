@@ -1,6 +1,5 @@
 .DS_Store
-test.txt
-input.txt
+*.txt
 template/*
 __pycache__
 .vscode

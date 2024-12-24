@@ -1,8 +1,14 @@
+from classes.grid import Node, Grid
+from classes.helper import Loc, Direction
 
-def solve(lines:list[str]) -> int:
-    return 0
+def solve(lines:list[list[str]]) -> int:
+    garden:Grid = Grid(lines)
+    print(garden.garden)
+    total:int = garden.solve_part_1()
+    print(garden.garden)
+    return total
 
 if __name__ == '__main__':
-    lines:list[str] =  [_.rstrip() for _ in open("test.txt",'r').readlines()]
-    total:int = solve(lines)
+    grid:list[list[str]] =  [list(_.rstrip()) for _ in open("test_small.txt",'r').readlines()]
+    total:int = solve(grid)
     print(total)
