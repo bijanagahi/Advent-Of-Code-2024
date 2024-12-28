@@ -1,3 +1,24 @@
+class Xorshift:
+    def __init__(self, seed:int) -> None:
+        self.state = seed
+    
+    def shift(self) -> None:
+        '''
+        Get the next state.
+
+        This Xorshift is defined by the tuple [6,5,11]
+        Meaning we shift left 6, right 5, left 11, xor-ing each time.
+        '''
+        # Perform a series of 'mix' operations
+        self.state = (self.state << 6) ^ self.state
+        self.state = self.state % 16777216 # we have to prune here because of the right shift
+        self.state = (self.state >> 5) ^ self.state
+        self.state = (self.state << 11) ^ self.state
+
+        # 'Prune' the state to stay within 24 bits
+        self.state = self.state % 16777216
+
+
 class Secret:
     def __init__(self, initial:int) -> None:
         self.initial_secret = initial
