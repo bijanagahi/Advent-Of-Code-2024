@@ -17,6 +17,9 @@ class Xorshift:
 
         # 'Prune' the state to stay within 24 bits
         self.state = self.state % 16777216
+    
+    def get_ones(self) -> int:
+        return int(str(self.state)[-1])
 
 
 class Secret:
