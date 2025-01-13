@@ -59,12 +59,21 @@ class Grid:
                     q.append(new_path)
         
         return [] # couldn't find a path between the nodes
+    
+    def find_cell(self, target:str) -> Loc:
+        '''
+        Returns the Loc of the *first* cell that matches the target value
+        '''
+        for x,y in product(range(len(self.grid)),range(len(self.grid[0]))):
+            if self.grid[x][y] == target:
+                return Loc(x,y)
+        raise IndexError(f"Could not find symbol ('{target}')")
             
 
-    '''
-    Returns the value in the grid at this location
-    '''
     def get_grid_value(self,loc:Loc) -> str:
+        '''
+        Returns the value in the grid at this location
+        '''
         return self.grid[loc.x][loc.y]
     
     def __str__(self) -> str:
